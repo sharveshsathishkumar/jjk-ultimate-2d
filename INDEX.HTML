@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>JJK Ultimate 2D</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: Arial, sans-serif;
+    touch-action: none;
+  }
+  canvas {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    background: radial-gradient(circle at center, #141827 0%, #07080d 60%, #000 100%);
+    touch-action: none;
+  }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.58);
+    z-index: 20;
+  }
+  .hidden { display: none !important; }
+  .panel {
+    background: rgba(13,16,24,.95);
+    color: #fff;
+    width: min(92vw, 520px);
+    max-height: 88vh;
+    overflow: auto;
+    padding: 24px;
+    border-radius: 22px;
+    text-align: center;
+    box-shadow: 0 18px 60px rgba(0,0,0,.45);
+  }
+  .title {
+    font-size: clamp(30px, 5vw, 44px);
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    color: #d7dceb;
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 14px;
+  }
+  button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px 15px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .primary { background: linear-gradient(180deg, #9085ff, #5f5bf2); color: #fff; }
+  .secondary { background: rgba(255,255,255,.12); color: #fff; }
+  .green { background: linear-gradient(180deg, #8cffac, #39cc72); color: #07120b; }
+  .danger { background: linear-gradient(180deg, #ffab9c, #ff6c6c); color: #270909; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .store-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; max-height: 52vh; overflow: auto; }
+  .card { background: rgba(255,255,255,.06); border-radius: 14px; padding: 12px; text-align: left; }
+  .small { font-size: 12px; color: #cfd5e4; margin-top: 4px; }
+
+  .touch-hud {
+    position: fixed;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+  }
+  .selector-bar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: min(94vw, 760px);
+    pointer-events: auto;
+  }
+  .sel-btn {
+    width: auto;
+    min-width: 42px;
+    padding: 8px 10px;
+    margin: 0;
+    border-radius: 10px;
+    font-size: 12px;
+    background: rgba(255,255,255,.14);
+    color: #fff;
+  }
+  .sel-btn.active { background: rgba(255,255,255,.3); }
+  .touch-controls {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 18px;
+    pointer-events: none;
+  }
+  .dpad, .actionpad { pointer-events: auto; display: grid; gap: 10px; }
+  .dpad {
+    grid-template-columns: 64px 64px 64px;
+    grid-template-rows: 64px 64px 64px;
+    align-items: center;
+    justify-items: center;
+  }
+  .actionpad { grid-template-columns: 74px 74px; grid-template-rows: 74px 74px; }
+  .pad-btn {
+    width: 64px;
+    height: 64px;
+    margin: 0;
+    border-radius: 16px;
+    background: rgba(255,255,255,.14);
+    color: #fff;
+    font-size: 18px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .action-btn {
+    width: 74px;
+    height: 74px;
+    margin: 0;
+    border-radius: 18px;
+    background: rgba(255,255,255,.16);
+    color: #fff;
+    font-size: 18px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .empty-cell { width: 64px; height: 64px; }
+  @media (min-width: 901px) {
+    .touch-hud.touch-only { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="menuScreen" class="overlay">
+  <div class="panel">
+    <div class="title">🔥 JJK ULTIMATE 2D 🔥</div>
+    <div class="subtitle">Beat the waves, defeat Sukuna on Wave 8, and clear Wave 10 to win.</div>
+    <div class="row">
+      <button id="easyBtn" class="green">Easy</button>
+      <button id="hardBtn" class="secondary">Hard</button>
+    </div>
+    <button id="playBtn" class="primary">Play</button>
+    <button id="storeBtn" class="secondary">JJK Store</button>
+    <button id="instructionsBtn" class="secondary">Instructions</button>
+<div id="menuScreen" class="overlay">
+  <div class="panel">
+    <div class="title">🔥 JJK ULTIMATE 2D 🔥</div>
+    <div class="subtitle">Beat the waves, defeat Sukuna on Wave 8, and clear Wave 10 to win.</div>
+    <div class="row">
+      <button id="easyBtn" class="green">Easy</button>
+      <button id="hardBtn" class="secondary">Hard</button>
+    </div>
+    <button id="playBtn" class="primary">Play</button>
+    <button id="storeBtn" class="secondary">JJK Store</button>
+    <button id="instructionsBtn" class="secondary">Instructions</button>
+
+    <div style="margin-top:16px; padding:12px; border-radius:14px; background:rgba(255,255,255,0.06); text-align:left; color:#d7dceb; line-height:1.6; font-size:13px;">
+      <div><b>Designed by:</b> Sharvesh Sathishkumar</div>
+      <div>
+        <b>Contact:</b>
+        <a href="mailto:sharveshsathishkumar@gmail.com" style="color:#9ecbff; text-decoration:none;">
+          sharveshsathishkumar@gmail.com
+        </a>
+      </div>
+      <div><b>Copyright:</b> © 2026 Sharvesh Sathishkumar. All rights reserved.</div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div id="instructionsScreen" class="overlay hidden">
+  <div class="panel">
+    <div class="title">Instructions</div>
+    <div style="background: rgba(255,255,255,0.06); border-radius: 14px; padding: 12px; text-align: left; color: white; line-height: 1.6;">
+  <h2 style="margin-top: 0;">How to Play</h2>
+  <ul style="padding-left: 20px; margin-bottom: 0;">
+    <li>Use <b>W A S D</b> or the touch buttons to move.</li>
+    <li>Press <b>J</b> to punch.</li>
+    <li>Press <b>K</b> to use special power.</li>
+    <li>Press <b>E</b> to use domain.</li>
+    <li>Press <b>1</b> for Gojo, <b>2</b> for Toji, <b>3</b> for Maki, <b>4</b> for Yuji, <b>5</b> for Todo, <b>6</b> for Hakari.</li>
+    <li>When domain is active, <b>everyone gives 2x damage</b>.</li>
+    <li>During domain, every character gets a <b>white aura</b>.</li>
+    <li><b>Yuji</b> gives 2x punch damage, but he also takes 2x damage.</li>
+    <li><b>Todo</b> gives 2x damage.</li>
+    <li><b>Hakari</b> gives 2x damage and takes much less damage from enemies.</li>
+    <li>Every round has <b>one health box</b>.</li>
+    <li>The health box gives back <b>some HP</b>, not full HP.</li>
+  </ul>
+</div>
+    <button id="backFromInstructions" class="secondary">Back</button>
+  </div>
+</div>
+
+<div id="storeScreen" class="overlay hidden">
+  <div class="panel">
+    <div class="title">🛒 JJK Store</div>
+    <div id="pointsText" class="subtitle">Remaining Points: 0</div>
+    <div id="storeList" class="store-grid"></div>
+    <button id="backFromStore" class="secondary">Back To Menu</button>
+  </div>
+</div>
+
+<div id="resultScreen" class="overlay hidden">
+  <div class="panel">
+    <div id="resultTitle" class="title">YOU WON</div>
+    <div id="resultText" class="subtitle">Press play again to restart.</div>
+    <button id="playAgainBtn" class="primary">Play Again</button>
+    <button id="menuBtn" class="secondary">Back To Menu</button>
+  </div>
+</div>
+
+<div id="touchHud" class="touch-hud touch-only hidden">
+  <div id="selectorBar" class="selector-bar"></div>
+  <div class="touch-controls">
+    <div class="dpad">
+      <div class="empty-cell"></div>
+      <button class="pad-btn" id="touchUp">▲</button>
+      <div class="empty-cell"></div>
+      <button class="pad-btn" id="touchLeft">◀</button>
+      <div class="empty-cell"></div>
+      <button class="pad-btn" id="touchRight">▶</button>
+      <div class="empty-cell"></div>
+      <button class="pad-btn" id="touchDown">▼</button>
+      <div class="empty-cell"></div>
+    </div>
+    <div class="actionpad">
+      <button class="action-btn" id="touchPunch">J</button>
+      <button class="action-btn" id="touchSpecial">K</button>
+      <button class="action-btn" id="touchDomain">E</button>
+      <button class="action-btn" id="touchRestart">R</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const TAU = Math.PI * 2;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const menuScreen = document.getElementById('menuScreen');
+  const storeScreen = document.getElementById('storeScreen');
+  const instructionsScreen = document.getElementById('instructionsScreen');
+  const resultScreen = document.getElementById('resultScreen');
+  const pointsText = document.getElementById('pointsText');
+  const storeList = document.getElementById('storeList');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultText = document.getElementById('resultText');
+  const easyBtn = document.getElementById('easyBtn');
+  const hardBtn = document.getElementById('hardBtn');
+  const touchHud = document.getElementById('touchHud');
+  const selectorBar = document.getElementById('selectorBar');
+
+  const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const keys = Object.create(null);
+  const touchMove = { up: false, down: false, left: false, right: false };
+  let lastTime = performance.now();
+  let enemies = [];
+  let attacks = [];
+  let particles = [];
+  let floatingTexts = [];
+  let healthBox = null;
+  let enemyId = 1;
+
+  const difficultyCfg = {
+    easy: { enemyExtra: 0, enemySpeed: 0.9, enemyDmg: 0.82, bossSpeed: 0.92, bossDmg: 0.85, heal: 50, reward: 100 },
+    hard: { enemyExtra: 2, enemySpeed: 1.15, enemyDmg: 1.25, bossSpeed: 1.12, bossDmg: 1.2, heal: 40, reward: 200 }
+  };
+
+  const characters = [
+    { key: '1', name: 'GOJO', color: '#8ee7ff', speed: 178, aura: 'rgba(130,210,255,.82)', domainFill: 'rgba(130,180,255,.15)', normalMult: 1, takeMult: 1, specialColor: 'rgba(186,100,255,.95)' },
+    { key: '2', name: 'TOJI', color: '#96ff95', speed: 196, aura: 'rgba(120,255,150,.82)', domainFill: 'rgba(120,255,150,.13)', normalMult: 1, takeMult: 1, specialColor: 'rgba(186,100,255,.95)' },
+    { key: '3', name: 'MAKI', color: '#ffe56f', speed: 184, aura: 'rgba(255,225,110,.78)', domainFill: 'rgba(255,225,120,.13)', normalMult: 1, takeMult: 0.6, specialColor: 'rgba(186,100,255,.95)' },
+    { key: '4', name: 'YUJI', color: '#ff9595', speed: 186, aura: 'rgba(255,120,120,.80)', domainFill: 'rgba(255,120,120,.12)', normalMult: 2, takeMult: 2, specialColor: 'rgba(255,40,40,.98)' },
+    { key: '5', name: 'TODO', color: '#fff0b7', speed: 180, aura: 'rgba(255,240,183,.82)', domainFill: 'rgba(255,240,190,.12)', normalMult: 2, takeMult: 1, specialColor: 'rgba(255,210,130,.96)' },
+    { key: '6', name: 'HAKARI', color: '#d99bff', speed: 182, aura: 'rgba(220,150,255,.80)', domainFill: 'rgba(210,120,255,.12)', normalMult: 2, takeMult: 0.33, specialColor: 'rgba(210,100,255,.95)' }
+  ];
+
+  const storeItems = [
+    { id: 'YUJI', label: 'Yuji', cost: 100, key: '4', desc: '2x damage, but takes 2x damage.' },
+    { id: 'TODO', label: 'Todo', cost: 490, key: '5', desc: '2x damage.' },
+    { id: 'HAKARI', label: 'Hakari', cost: 700, key: '6', desc: '2x damage and huge defense.' }
+  ];
+
+  const game = {
+    screen: 'menu',
+    difficulty: localStorage.getItem('jjk_diff') || 'easy',
+    points: Number(localStorage.getItem('jjk_points') || '0'),
+    unlocked: JSON.parse(localStorage.getItem('jjk_unlocked') || '{"GOJO":true,"TOJI":true,"MAKI":true,"YUJI":false,"TODO":false,"HAKARI":false}'),
+    wave: 1,
+    bossWave: false,
+    won: false,
+    gameOver: false,
+    zoomTime: 0,
+    zoomName: 'GOJO',
+    toast: '',
+    toastTime: 0
+  };
+
+  const player = {
+    x: 120,
+    y: 320,
+    w: 56,
+    h: 88,
+    hp: 100,
+    maxHp: 100,
+    facing: 1,
+    selected: 'GOJO',
+    punchCooldown: 0,
+    specialCooldown: 0,
+    domainCooldown: 0,
+    domainTime: 0,
+    hurtTime: 0,
+    attackTime: 0,
+    walkTime: 0
+  };
+
+  function saveProgress() {
+    localStorage.setItem('jjk_points', String(game.points));
+    localStorage.setItem('jjk_unlocked', JSON.stringify(game.unlocked));
+    localStorage.setItem('jjk_diff', game.difficulty);
+  }
+
+  function currentCharacter() {
+    return characters.find(c => c.name === player.selected) || characters[0];
+  }
+
+  function showScreen(name) {
+    menuScreen.classList.add('hidden');
+    storeScreen.classList.add('hidden');
+    instructionsScreen.classList.add('hidden');
+    resultScreen.classList.add('hidden');
+    touchHud.classList.add('hidden');
+    if (name === 'menu') menuScreen.classList.remove('hidden');
+    if (name === 'store') storeScreen.classList.remove('hidden');
+    if (name === 'instructions') instructionsScreen.classList.remove('hidden');
+    if (name === 'result') resultScreen.classList.remove('hidden');
+    if (!name && isTouchDevice) touchHud.classList.remove('hidden');
+    game.screen = name || 'playing';
+    updateSelectorButtons();
+  }
+
+  function openStore() {
+    renderStore();
+    showScreen('store');
+  }
+
+  function closeStore() {
+    showScreen('menu');
+  }
+
+  function updateDifficultyButtons() {
+    easyBtn.className = game.difficulty === 'easy' ? 'green' : 'secondary';
+    hardBtn.className = game.difficulty === 'hard' ? 'danger' : 'secondary';
+    saveProgress();
+  }
+
+  function setToast(text) {
+    game.toast = text;
+    game.toastTime = 1.8;
+  }
+
+  function addFloatingText(text, x, y, color = '#fff') {
+    floatingTexts.push({ text, x, y, color, life: 0.9, vy: -18 });
+  }
+
+  function addBurst(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
+      particles.push({ x, y, vx: rand(-120, 120), vy: rand(-120, 120), r: rand(1.5, 3.4), life: rand(0.25, 0.8), color });
+    }
+  }
+
+  function resetPlayerPosition() {
+    player.x = Math.max(40, Math.min(canvas.width * 0.18, canvas.width - 200));
+    player.y = canvas.height * 0.58;
+  }
+
+  function resetGame() {
+    game.wave = 1;
+    game.bossWave = false;
+    game.won = false;
+    game.gameOver = false;
+    game.zoomTime = 0;
+    game.toast = '';
+    game.toastTime = 0;
+    player.hp = player.maxHp;
+    player.punchCooldown = 0;
+    player.specialCooldown = 0;
+    player.domainCooldown = 0;
+    player.domainTime = 0;
+    player.hurtTime = 0;
+    player.attackTime = 0;
+    attacks = [];
+    particles = [];
+    floatingTexts = [];
+    enemies = [];
+    resetPlayerPosition();
+    spawnWave();
+  }
+
+  function startGame() {
+    showScreen(null);
+    resetGame();
+  }
+
+  function safeSpawnPositions(count) {
+    const spots = [];
+    let tries = 0;
+    while (spots.length < count && tries < count * 250) {
+      tries++;
+      const x = rand(canvas.width * 0.55, canvas.width - 120);
+      const y = rand(130, canvas.height - 120);
+      let ok = Math.hypot(x - player.x, y - player.y) > 220;
+      for (const s of spots) if (Math.hypot(x - s.x, y - s.y) < 95) ok = false;
+      if (ok) spots.push({ x, y });
+    }
+    while (spots.length < count) {
+      spots.push({ x: canvas.width - 170 - spots.length * 60, y: 150 + spots.length * 58 });
+    }
+    return spots;
+  }
+
+  function createEnemy(x, y) {
+    const d = difficultyCfg[game.difficulty];
+    return {
+      id: enemyId++, x, y, w: 42, h: 78, hp: 60, maxHp: 60,
+      speed: (50 + game.wave * 3) * d.enemySpeed,
+      damage: (4 + Math.min(4, Math.floor(game.wave / 2))) * d.enemyDmg,
+      touchCooldown: 0, hurtTime: 0, isBoss: false, name: 'CURSE', walkSeed: Math.random() * 10
+    };
+  }
+
+  function createBoss() {
+    const d = difficultyCfg[game.difficulty];
+    return {
+      id: enemyId++, x: canvas.width - 220, y: canvas.height * 0.46, w: 78, h: 126,
+      hp: 900, maxHp: 900, speed: 68 * d.bossSpeed, damage: 9 * d.bossDmg,
+      touchCooldown: 0, hurtTime: 0, isBoss: true, name: 'SUKUNA', walkSeed: 0,
+      bossDomainTime: 0, bossDomainCooldown: 8
+    };
+  }
+
+  function spawnHealthBox() {
+    healthBox = { x: rand(canvas.width * 0.36, canvas.width - 110), y: rand(120, canvas.height - 110), w: 30, h: 30, active: true, heal: difficultyCfg[game.difficulty].heal };
+  }
+
+  function spawnWave() {
+    enemies = [];
+    attacks = [];
+    particles = [];
+    floatingTexts = [];
+    resetPlayerPosition();
+    if (game.wave === 8) {
+      game.bossWave = true;
+      enemies.push(createBoss());
+    } else {
+      game.bossWave = false;
+      const base = 2 + game.wave + difficultyCfg[game.difficulty].enemyExtra;
+      const count = Math.min(base, game.difficulty === 'easy' ? 6 : 8);
+      const spots = safeSpawnPositions(count);
+      for (let i = 0; i < count; i++) enemies.push(createEnemy(spots[i].x, spots[i].y));
+    }
+    spawnHealthBox();
+  }
+
+  function nextWave() {
+    if (game.wave >= 9) {
+      game.wave = 10;
+      game.won = true;
+      game.points += difficultyCfg[game.difficulty].reward;
+      saveProgress();
+      resultTitle.textContent = 'YOU WON 🔥';
+      resultTitle.style.color = '#89ff9a';
+      resultText.textContent = 'You earned ' + difficultyCfg[game.difficulty].reward + ' points.';
+      showScreen('result');
+      return;
+    }
+    game.wave += 1;
+    spawnWave();
+  }
+
+  function domainDamageMultiplier() {
+    return player.domainTime > 0 ? 2 : 1;
+  }
+
+  function enemyDamageMultiplier() {
+    return player.domainTime > 0 ? 2 : 1;
+  }
+
+  function playerSpeedMultiplier() {
+    if (player.domainTime > 0 && currentCharacter().name === 'TOJI') return 1.6;
+    return 1;
+  }
+
+  function playerDamageTakenMultiplier() {
+    return currentCharacter().takeMult;
+  }
+
+  function createPunch() {
+    const ch = currentCharacter();
+    const dir = player.facing;
+    player.attackTime = 0.15;
+    attacks.push({
+      type: 'punch',
+      x: dir > 0 ? player.x + player.w - 2 : player.x - 34,
+      y: player.y + 32,
+      w: 36,
+      h: 18,
+      vx: dir * 520,
+      life: 0.11,
+      damageNormal: 30 * ch.normalMult,
+      damageBoss: 30 * ch.normalMult,
+      color: '#ffd66f',
+      hitIds: new Set()
+    });
+  }
+
+  function createSpecial() {
+    if (player.specialCooldown > 0) return;
+    const ch = currentCharacter();
+    const dir = player.facing;
+    const bossDamage = ch.name === 'HAKARI' ? 180 : 90;
+    player.specialCooldown = 40;
+    player.attackTime = 0.24;
+    attacks.push({
+      type: 'special',
+      x: dir > 0 ? player.x + player.w : player.x - 20,
+      y: player.y + 16,
+      w: 140,
+      h: 54,
+      vx: dir * 650,
+      life: 0.38,
+      damageNormal: 9999,
+      damageBoss: bossDamage,
+      color: ch.specialColor,
+      hitIds: new Set()
+    });
+    addBurst(player.x + player.w / 2, player.y + player.h / 2, ch.specialColor, 18);
+  }
+
+  function triggerDomain() {
+    if (player.domainCooldown > 0 || player.domainTime > 0) return;
+    const ch = currentCharacter();
+    player.domainCooldown = 120;
+    player.domainTime = 10;
+    game.zoomTime = 1.05;
+    game.zoomName = ch.name;
+    addBurst(player.x + player.w / 2, player.y + player.h / 2, ch.aura, 36);
+
+    if (ch.name === 'GOJO') {
+      for (const e of enemies) {
+        if (e.isBoss) {
+          e.hp -= 300;
+          addFloatingText('-300', e.x + e.w / 2, e.y - 8, '#ffaeae');
+        } else {
+          e.hp = 0;
+          addFloatingText('ERASED', e.x + e.w / 2, e.y - 8, '#d9f2ff');
+        }
+      }
+      setToast('Gojo domain erased all normal enemies!');
+    }
+  }
+
+  function hurtPlayer(amount) {
+    if (game.gameOver || game.won || game.screen !== 'playing') return;
+    const dmg = amount * playerDamageTakenMultiplier() * enemyDamageMultiplier();
+    player.hp = Math.max(0, player.hp - dmg);
+    player.hurtTime = 0.15;
+    addFloatingText('-' + Math.ceil(dmg), player.x + player.w / 2, player.y - 8, '#ff8f8f');
+    if (player.hp <= 0) {
+      game.gameOver = true;
+      resultTitle.textContent = 'GAME OVER';
+      resultTitle.style.color = '#ff8a8a';
+      resultText.textContent = 'Try again and use your domain better.';
+      showScreen('result');
+    }
+  }
+
+  function damageEnemy(enemy, attack) {
+    if (attack.hitIds.has(enemy.id)) return;
+    attack.hitIds.add(enemy.id);
+    let damage = enemy.isBoss ? attack.damageBoss : attack.damageNormal;
+    damage *= domainDamageMultiplier();
+    enemy.hp -= damage;
+    enemy.hurtTime = 0.12;
+    addFloatingText(enemy.isBoss ? '-' + Math.round(damage) : (attack.type === 'special' ? 'KO!' : '-' + Math.round(damage)), enemy.x + enemy.w / 2, enemy.y - 10, enemy.isBoss ? '#ff9d9d' : '#fff');
+    addBurst(enemy.x + enemy.w / 2, enemy.y + enemy.h / 3, enemy.isBoss ? 'rgba(255,80,80,.95)' : 'rgba(255,220,160,.9)', enemy.isBoss ? 8 : 5);
+    if (attack.type === 'punch') attack.life = 0;
+    if (attack.type === 'special' && !enemy.isBoss) attack.life = 0;
+  }
+
+  function trySwitchCharacter(name) {
+    if (!game.unlocked[name] && !['GOJO', 'TOJI', 'MAKI'].includes(name)) {
+      setToast(name + ' is locked. Buy it in store.');
+      return;
+    }
+    player.selected = name;
+    updateSelectorButtons();
+    setToast(name + ' selected');
+  }
+
+  function updateEffects(dt) {
+    for (const p of particles) {
+      p.life -= dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.986;
+      p.vy *= 0.986;
+    }
+    particles = particles.filter(p => p.life > 0);
+    for (const t of floatingTexts) {
+      t.life -= dt;
+      t.y += t.vy * dt;
+    }
+    floatingTexts = floatingTexts.filter(t => t.life > 0);
+    game.toastTime = Math.max(0, game.toastTime - dt);
+    if (game.toastTime <= 0) game.toast = '';
+  }
+
+  function update(dt) {
+    updateEffects(dt);
+    if (game.screen !== 'playing' || game.gameOver || game.won) return;
+
+    player.punchCooldown = Math.max(0, player.punchCooldown - dt);
+    player.specialCooldown = Math.max(0, player.specialCooldown - dt);
+    player.domainCooldown = Math.max(0, player.domainCooldown - dt);
+    player.domainTime = Math.max(0, player.domainTime - dt);
+    player.hurtTime = Math.max(0, player.hurtTime - dt);
+    player.attackTime = Math.max(0, player.attackTime - dt);
+    game.zoomTime = Math.max(0, game.zoomTime - dt);
+
+    let mx = 0, my = 0;
+    if (keys['w'] || touchMove.up) my -= 1;
+    if (keys['s'] || touchMove.down) my += 1;
+    if (keys['a'] || touchMove.left) mx -= 1;
+    if (keys['d'] || touchMove.right) mx += 1;
+
+    if (mx || my) {
+      const len = Math.hypot(mx, my) || 1;
+      mx /= len;
+      my /= len;
+      player.walkTime += dt * 10;
+      if (mx < 0) player.facing = -1;
+      if (mx > 0) player.facing = 1;
+    }
+
+    const speed = currentCharacter().speed * playerSpeedMultiplier();
+    player.x += mx * speed * dt;
+    player.y += my * speed * dt;
+    player.x = clamp(player.x, 30, canvas.width - player.w - 30);
+    player.y = clamp(player.y, 95, canvas.height - player.h - 30);
+
+    if (healthBox && healthBox.active && rectsOverlap(player, healthBox)) {
+      healthBox.active = false;
+      player.hp = Math.min(player.maxHp, player.hp + healthBox.heal);
+      addFloatingText('+' + healthBox.heal + ' HP', player.x + player.w / 2, player.y - 18, '#91ff91');
+      addBurst(healthBox.x + healthBox.w / 2, healthBox.y + healthBox.h / 2, 'rgba(80,255,120,.95)', 16);
+    }
+
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      e.hurtTime = Math.max(0, e.hurtTime - dt);
+      e.touchCooldown = Math.max(0, e.touchCooldown - dt);
+
+      if (e.isBoss) {
+        e.bossDomainTime = Math.max(0, e.bossDomainTime - dt);
+        e.bossDomainCooldown = Math.max(0, e.bossDomainCooldown - dt);
+        if (e.hp < 650 && e.bossDomainCooldown <= 0) {
+          e.bossDomainTime = 4.5;
+          e.bossDomainCooldown = 12;
+        }
+      }
+
+      const pc = center(player);
+      const ec = center(e);
+      let dx = pc.x - ec.x;
+      let dy = pc.y - ec.y;
+      let dist = Math.max(1, Math.hypot(dx, dy));
+      const stopRange = e.isBoss ? 84 : 62;
+      const speedBoost = e.isBoss && e.bossDomainTime > 0 ? 1.2 : 1;
+
+      if (dist > stopRange) {
+        e.x += (dx / dist) * e.speed * speedBoost * dt;
+        e.y += (dy / dist) * e.speed * speedBoost * dt;
+      } else {
+        e.x += (-dy / dist) * 22 * dt;
+        e.y += (dx / dist) * 22 * dt;
+      }
+
+      for (let j = i + 1; j < enemies.length; j++) {
+        const o = enemies[j];
+        const a = center(e);
+        const b = center(o);
+        let sx = a.x - b.x;
+        let sy = a.y - b.y;
+        let sd = Math.max(1, Math.hypot(sx, sy));
+        const minD = (e.isBoss || o.isBoss) ? 98 : 70;
+        if (sd < minD) {
+          const push = (minD - sd) * 0.42;
+          const px = (sx / sd) * push;
+          const py = (sy / sd) * push;
+          e.x += px; e.y += py; o.x -= px; o.y -= py;
+        }
+      }
+
+      e.x = clamp(e.x, 25, canvas.width - e.w - 25);
+      e.y = clamp(e.y, 95, canvas.height - e.h - 25);
+
+      if (rectsOverlap(e, player) && e.touchCooldown <= 0) {
+        let dmg = e.damage;
+        if (e.isBoss && e.bossDomainTime > 0) dmg *= 1.25;
+        hurtPlayer(dmg);
+        e.touchCooldown = e.isBoss ? 0.55 : 0.82;
+      }
+    }
+
+    for (const e of enemies) {
+      if (!rectsOverlap(e, player)) continue;
+      const pc = center(player);
+      const ec = center(e);
+      const dx = ec.x - pc.x;
+      const dy = ec.y - pc.y;
+      const d = Math.max(1, Math.hypot(dx, dy));
+      const push = e.isBoss ? 4.6 : 3.0;
+      e.x += (dx / d) * push;
+      e.y += (dy / d) * push;
+      player.x -= (dx / d) * push * 0.25;
+      player.y -= (dy / d) * push * 0.25;
+    }
+
+    for (const a of attacks) {
+      a.life -= dt;
+      a.x += a.vx * dt;
+      if (a.type === 'special') {
+        particles.push({ x: a.x + a.w / 2, y: a.y + rand(0, a.h), vx: rand(-50, 50), vy: rand(-30, 30), r: rand(2, 4), life: 0.18, color: a.color });
+      }
+      for (const e of enemies) {
+        if (e.hp > 0 && rectsOverlap(a, e)) damageEnemy(e, a);
+      }
+    }
+
+    attacks = attacks.filter(a => a.life > 0 && a.x < canvas.width + 100 && a.x + a.w > -100);
+    enemies = enemies.filter(e => e.hp > 0);
+    if (enemies.length === 0) nextWave();
+  }
+
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+  function rectsOverlap(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+  function center(o) { return { x: o.x + o.w / 2, y: o.y + o.h / 2 }; }
+
+  function drawBar(x, y, w, h, pct, fill) {
+    ctx.fillStyle = 'rgba(255,255,255,.14)';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = fill;
+    ctx.fillRect(x, y, Math.max(0, w * clamp(pct, 0, 1)), h);
+    ctx.strokeStyle = 'rgba(255,255,255,.35)';
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  function drawAura(x, y, r, color) {
+    const g = ctx.createRadialGradient(x, y, 6, x, y, r);
+    g.addColorStop(0, color);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fill();
+  }
+
+  function drawBody(entity, bodyColor, skinColor, hairColor, accentColor, weaponType) {
+    const x = entity.x;
+    const y = entity.y + Math.sin((performance.now() / 130) + (entity.walkSeed || 0)) * 1.5;
+    const w = entity.w;
+    const h = entity.h;
+    const cx = x + w / 2;
+    const dir = entity === player ? player.facing : (center(player).x > center(entity).x ? 1 : -1);
+    const attackPush = entity === player && player.attackTime > 0 ? 10 : 0;
+
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(cx, y + h - 3, w * 0.34, 6, 0, 0, TAU);
+    ctx.fill();
+
+    ctx.fillStyle = skinColor;
+    ctx.fillRect(cx - 10, y + 10, 20, 16);
+    ctx.fillStyle = hairColor;
+    ctx.fillRect(cx - 14, y - 2, 28, 12);
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(cx - 12, y + 26, 24, 30);
+    if (accentColor) {
+      ctx.fillStyle = accentColor;
+      ctx.fillRect(cx - 13, y + 26, 26, 7);
+    }
+
+    ctx.strokeStyle = '#d9d9d9';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 11, y + 32);
+    ctx.lineTo(cx - 18 - (dir < 0 ? attackPush : 0), y + 44);
+    ctx.moveTo(cx + 11, y + 32);
+    ctx.lineTo(cx + 18 + (dir > 0 ? attackPush : 0), y + 44);
+    ctx.moveTo(cx - 6, y + 56);
+    ctx.lineTo(cx - 8, y + h - 4);
+    ctx.moveTo(cx + 6, y + 56);
+    ctx.lineTo(cx + 8, y + h - 4);
+    ctx.stroke();
+
+    if (weaponType === 'spear') {
+      ctx.strokeStyle = '#f5f5f5';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(cx + 16, y + 38);
+      ctx.lineTo(cx + 34, y + 18);
+      ctx.stroke();
+      ctx.strokeStyle = '#f65050';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx + 34, y + 18);
+      ctx.lineTo(cx + 42, y + 12);
+      ctx.stroke();
+    }
+    if (weaponType === 'bladeOrb') {
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(cx + 18, y + 24);
+      ctx.lineTo(cx + 34, y + 8);
+      ctx.stroke();
+      ctx.fillStyle = '#7e3bd2';
+      ctx.beginPath();
+      ctx.arc(cx + 36, y + 8, 7, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  function drawPixelCharacter(entity, type, isPlayer) {
+    ctx.save();
+    if ((isPlayer && player.hurtTime > 0) || (!isPlayer && entity.hurtTime > 0)) {
+      ctx.globalAlpha = 0.72 + Math.sin(performance.now() / 35) * 0.28;
+    }
+
+    if (type === 'GOJO') drawBody(entity, '#111722', '#f0d2b2', '#bfaef0', '#1d2430', null);
+    else if (type === 'TOJI') drawBody(entity, '#2d2d2d', '#f0c59d', '#1a1a1a', '#8e68c9', 'bladeOrb');
+    else if (type === 'MAKI') drawBody(entity, '#0f5a78', '#e8c39c', '#0f5a78', null, 'spear');
+    else if (type === 'YUJI') drawBody(entity, '#1d2f7b', '#f0d2b2', '#d98995', '#d72c2c', null);
+    else if (type === 'TODO') drawBody(entity, '#2d1f10', '#e5c7a1', '#7d6c43', null, null);
+    else if (type === 'HAKARI') drawBody(entity, '#5d2d99', '#e0ba98', '#7d39d3', null, null);
+    else if (type === 'SUKUNA') drawBody(entity, '#1b1b1b', '#e7b3a6', '#e097a5', null, null);
+    else drawBody(entity, '#4b1111', '#f1c4c4', '#8e1818', null, null);
+
+    ctx.restore();
+  }
+
+  function drawCharacter(entity, type, isPlayer) {
+    if (player.domainTime > 0 && game.screen === 'playing') {
+      drawAura(entity.x + entity.w / 2, entity.y + entity.h / 2, isPlayer ? 60 : 52, 'rgba(255,255,255,.42)');
+    }
+    if (isPlayer) drawAura(entity.x + entity.w / 2, entity.y + entity.h / 2, 50, currentCharacter().aura);
+    if (!isPlayer && entity.isBoss) drawAura(entity.x + entity.w / 2, entity.y + entity.h / 2, 62, 'rgba(255,70,70,.82)');
+    drawPixelCharacter(entity, type, isPlayer);
+  }
+
+  function drawHealthBox() {
+    if (!healthBox || !healthBox.active || game.screen !== 'playing') return;
+    drawAura(healthBox.x + healthBox.w / 2, healthBox.y + healthBox.h / 2, 26, 'rgba(100,255,110,.45)');
+    ctx.fillStyle = '#20c948';
+    ctx.fillRect(healthBox.x, healthBox.y, healthBox.w, healthBox.h);
+    ctx.strokeStyle = '#d8ffd7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(healthBox.x, healthBox.y, healthBox.w, healthBox.h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(healthBox.x + 12, healthBox.y + 5, 6, 20);
+    ctx.fillRect(healthBox.x + 5, healthBox.y + 12, 20, 6);
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#c5ffc7';
+    ctx.fillText('HP', healthBox.x + healthBox.w / 2, healthBox.y - 8);
+    ctx.textAlign = 'left';
+  }
+
+  function drawAttack(a) {
+    if (a.type === 'punch') {
+      ctx.fillStyle = a.color;
+      ctx.fillRect(a.x, a.y, a.w, a.h);
+      ctx.strokeStyle = 'rgba(255,255,255,.55)';
+      ctx.strokeRect(a.x, a.y, a.w, a.h);
+    } else {
+      const g = ctx.createLinearGradient(a.x, a.y, a.x + a.w, a.y);
+      g.addColorStop(0, 'rgba(255,255,255,.08)');
+      g.addColorStop(0.5, a.color);
+      g.addColorStop(1, 'rgba(255,255,255,.08)');
+      ctx.fillStyle = g;
+      ctx.fillRect(a.x, a.y, a.w, a.h);
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.globalAlpha = clamp(p.life * 1.6, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFloatingTexts() {
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 14px Arial';
+    for (const t of floatingTexts) {
+      ctx.globalAlpha = clamp(t.life / 0.9, 0, 1);
+      ctx.fillStyle = t.color;
+      ctx.fillText(t.text, t.x, t.y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+  }
+
+  function drawLabels() {
+    if (game.screen !== 'playing') return;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = currentCharacter().color;
+    ctx.fillText(currentCharacter().name, player.x + player.w / 2, player.y - 18);
+    drawBar(player.x - 6, player.y - 10, player.w + 12, 5, player.hp / player.maxHp, '#4fff79');
+    for (const e of enemies) {
+      ctx.fillStyle = e.isBoss ? '#ff9696' : '#ffffff';
+      ctx.fillText(e.name, e.x + e.w / 2, e.y - 18);
+      drawBar(e.x - 4, e.y - 11, e.w + 8, 5, e.hp / e.maxHp, e.isBoss ? '#ff5555' : '#ffb46d');
+    }
+    ctx.textAlign = 'left';
+  }
+
+  function drawDomainLayer() {
+    if (player.domainTime > 0 && game.screen === 'playing') {
+      const ch = currentCharacter();
+      ctx.fillStyle = ch.domainFill;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawAura(player.x + player.w / 2, player.y + player.h / 2, 180, ch.aura);
+      if (ch.name === 'GOJO') {
+        for (let i = 0; i < 18; i++) {
+          const ang = performance.now() / 700 + i;
+          const r = 48 + (i % 5) * 18;
+          const sx = player.x + player.w / 2 + Math.cos(ang + i) * r;
+          const sy = player.y + player.h / 2 + Math.sin(ang * 1.2 + i) * (r * 0.6);
+          ctx.fillStyle = 'rgba(210,235,255,.95)';
+          ctx.fillRect(sx, sy, 2, 2);
+        }
+      }
+    }
+    const boss = enemies.find(e => e.isBoss);
+    if (boss && boss.bossDomainTime > 0 && game.screen === 'playing') {
+      ctx.fillStyle = 'rgba(255,70,70,.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawAura(boss.x + boss.w / 2, boss.y + boss.h / 2, 170, 'rgba(255,80,80,.85)');
+    }
+  }
+
+  function drawFaceZoom() {
+    if (game.zoomTime <= 0 || game.screen !== 'playing') return;
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.36 + (1 - clamp(game.zoomTime / 1.05, 0, 1)) * 0.36) + ')';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const w = canvas.width * 0.52;
+    const h = canvas.height * 0.55;
+    const x = canvas.width * 0.24;
+    const y = canvas.height * 0.13;
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillRect(x, y, w, h);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 38px Arial';
+    ctx.fillStyle = currentCharacter().color;
+    ctx.fillText(game.zoomName + ' DOMAIN', canvas.width / 2, canvas.height * 0.82);
+    ctx.textAlign = 'left';
+  }
+
+  function drawToast() {
+    if (!game.toast || game.toastTime <= 0) return;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 18px Arial';
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.fillRect(canvas.width / 2 - 185, 26, 370, 34);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(game.toast, canvas.width / 2, 49);
+    ctx.textAlign = 'left';
+  }
+
+  function drawUI() {
+    if (game.screen !== 'playing') return;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 28px Arial';
+    ctx.fillText('JJK ULTIMATE 2D', 22, 38);
+    ctx.font = 'bold 24px Arial';
+    ctx.fillText('Wave: ' + game.wave, 22, 68);
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#d8d8d8';
+    ctx.fillText('Difficulty: ' + game.difficulty.toUpperCase() + '   Points: ' + game.points, 22, 92);
+    ctx.fillText('1 Gojo  2 Toji  3 Maki  4 Yuji  5 Todo  6 Hakari', 22, 112);
+    ctx.fillText('J Punch  K Special  E Domain  | Domains make everyone do 2x damage', 22, 132);
+    ctx.fillText('Yuji = 2x damage / 2x damage taken   Todo = 2x damage   Hakari = 2x damage / huge defense', 22, 152);
+
+    drawBar(22, 168, 240, 12, player.hp / player.maxHp, '#31e96a');
+    ctx.fillText('HP', 270, 179);
+    drawBar(22, 190, 240, 12, 1 - player.specialCooldown / 40, '#6e79ff');
+    ctx.fillText(player.specialCooldown > 0 ? 'K ' + player.specialCooldown.toFixed(1) + 's' : 'K READY', 270, 201);
+    drawBar(22, 212, 240, 12, 1 - player.domainCooldown / 120, '#bd8aff');
+    ctx.fillText(player.domainTime > 0 ? 'E ACTIVE ' + player.domainTime.toFixed(1) + 's' : (player.domainCooldown > 0 ? 'E ' + player.domainCooldown.toFixed(1) + 's' : 'E READY'), 270, 223);
+
+    if (game.bossWave) {
+      const boss = enemies.find(e => e.isBoss);
+      if (boss) {
+        ctx.fillStyle = '#ff9e9e';
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText('SUKUNA HP ' + Math.max(0, Math.ceil(boss.hp)) + ' / 900', 22, 248);
+        drawBar(22, 256, 350, 14, boss.hp / boss.maxHp, '#ff4f4f');
+      }
+    }
+    drawToast();
+  }
+
+  function drawMenuBackground() {
+    const t = performance.now() / 1000;
+    for (let i = 0; i < 18; i++) {
+      const x = (i * 117 + (t * 22 * (i % 3 + 1))) % (canvas.width + 80) - 40;
+      const y = 70 + (i * 53) % Math.max(200, canvas.height - 140);
+      ctx.globalAlpha = 0.14;
+      drawAura(x, y, 26 + (i % 4) * 8, i % 3 === 0 ? 'rgba(120,180,255,.5)' : i % 3 === 1 ? 'rgba(140,255,170,.45)' : 'rgba(255,220,120,.4)');
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function renderStore() {
+    pointsText.textContent = 'Remaining Points: ' + game.points;
+    storeList.innerHTML = '';
+    for (const item of storeItems) {
+      const owned = !!game.unlocked[item.id];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = '<div><b>' + item.label + '</b> - ' + item.cost + ' points</div><div class="small">' + item.desc + ' | Key ' + item.key + '</div>';
+      const btn = document.createElement('button');
+      btn.className = owned ? 'secondary' : 'primary';
+      btn.textContent = owned ? 'Owned' : 'Buy';
+      btn.disabled = owned;
+      btn.onclick = () => buyItem(item.id, item.cost);
+      card.appendChild(btn);
+      storeList.appendChild(card);
+    }
+  }
+
+  function buyItem(id, cost) {
+    if (game.unlocked[id]) return;
+    if (game.points < cost) {
+      renderStore();
+      setToast('Not enough points');
+      return;
+    }
+    game.points -= cost;
+    game.unlocked[id] = true;
+    saveProgress();
+    renderStore();
+    updateSelectorButtons();
+    setToast(id + ' unlocked');
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    bg.addColorStop(0, '#06070c');
+    bg.addColorStop(1, '#020204');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    drawMenuBackground();
+
+    if (game.screen === 'playing') {
+      drawDomainLayer();
+      drawHealthBox();
+      for (const a of attacks) drawAttack(a);
+      for (const e of enemies) drawCharacter(e, e.isBoss ? 'SUKUNA' : 'CURSE', false);
+      drawCharacter(player, currentCharacter().name, true);
+      drawParticles();
+      drawLabels();
+      drawFloatingTexts();
+      drawUI();
+      drawFaceZoom();
+    }
+  }
+
+  function updateSelectorButtons() {
+    selectorBar.innerHTML = '';
+    for (const ch of characters) {
+      const btn = document.createElement('button');
+      btn.className = 'sel-btn' + (player.selected === ch.name ? ' active' : '');
+      btn.textContent = ch.key;
+      const isDefault = ch.name === 'GOJO' || ch.name === 'TOJI' || ch.name === 'MAKI';
+      const locked = !game.unlocked[ch.name] && !isDefault;
+      if (locked) btn.textContent = '🔒' + ch.key;
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        trySwitchCharacter(ch.name);
+      });
+      selectorBar.appendChild(btn);
+    }
+  }
+
+  function bindHoldButton(id, keyName) {
+    const el = document.getElementById(id);
+    const on = (e) => { e.preventDefault(); touchMove[keyName] = true; };
+    const off = (e) => { e.preventDefault(); touchMove[keyName] = false; };
+    el.addEventListener('pointerdown', on);
+    el.addEventListener('pointerup', off);
+    el.addEventListener('pointercancel', off);
+    el.addEventListener('pointerleave', off);
+  }
+
+  function bindTapButton(id, handler) {
+    const el = document.getElementById(id);
+    el.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      handler();
+    });
+  }
+
+  bindHoldButton('touchUp', 'up');
+  bindHoldButton('touchDown', 'down');
+  bindHoldButton('touchLeft', 'left');
+  bindHoldButton('touchRight', 'right');
+  bindTapButton('touchPunch', () => { if (game.screen === 'playing' && player.punchCooldown <= 0) { player.punchCooldown = 0.24; createPunch(); } });
+  bindTapButton('touchSpecial', () => { if (game.screen === 'playing') createSpecial(); });
+  bindTapButton('touchDomain', () => { if (game.screen === 'playing') triggerDomain(); });
+  bindTapButton('touchRestart', () => { startGame(); });
+
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (['w','a','s','d','j','k','e','1','2','3','4','5','6','r',' ','enter','escape'].includes(k)) e.preventDefault();
+    keys[k] = true;
+
+    if (k === 'escape' && game.screen === 'store') {
+      closeStore();
+      return;
+    }
+
+    if (game.screen === 'menu' && (k === ' ' || k === 'enter')) {
+      startGame();
+      return;
+    }
+
+    if (game.screen !== 'playing') return;
+
+    if (k === '1') trySwitchCharacter('GOJO');
+    if (k === '2') trySwitchCharacter('TOJI');
+    if (k === '3') trySwitchCharacter('MAKI');
+    if (k === '4') trySwitchCharacter('YUJI');
+    if (k === '5') trySwitchCharacter('TODO');
+    if (k === '6') trySwitchCharacter('HAKARI');
+
+    if (k === 'j' && player.punchCooldown <= 0) { player.punchCooldown = 0.24; createPunch(); }
+    if (k === 'k') createSpecial();
+    if (k === 'e') triggerDomain();
+    if (k === 'r') startGame();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    keys[e.key.toLowerCase()] = false;
+  });
+
+  document.getElementById('playBtn').onclick = startGame;
+  document.getElementById('playAgainBtn').onclick = startGame;
+  document.getElementById('storeBtn').onclick = openStore;
+  document.getElementById('instructionsBtn').onclick = () => showScreen('instructions');
+  document.getElementById('backFromInstructions').onclick = () => showScreen('menu');
+  document.getElementById('backFromStore').onclick = closeStore;
+  document.getElementById('menuBtn').onclick = () => showScreen('menu');
+  easyBtn.onclick = () => { game.difficulty = 'easy'; updateDifficultyButtons(); };
+  hardBtn.onclick = () => { game.difficulty = 'hard'; updateDifficultyButtons(); };
+
+  function loop(now) {
+    const dt = Math.min(0.033, (now - lastTime) / 1000 || 0.016);
+    lastTime = now;
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  updateDifficultyButtons();
+  renderStore();
+  updateSelectorButtons();
+  showScreen('menu');
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
